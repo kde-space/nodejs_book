@@ -2,59 +2,46 @@
 const http = require('http');
 const httpStatus = require('http-status-codes');
 const fs = require('fs');
+const router = require('./router');
 const port = 3000;
 
-http.createServer((req, res) => {
-  const requestUrl = req.url;
-  console.log('requestUrl: ', requestUrl);
+const customReadFile = (file, res) => {
+  fs.readFile(`./${file}`, (error, data) => {
+    if (error) {
+      console.log('Error reading file...');
+    } else {
+      res.write(data);
+    }
+    res.end();
+  });
+};
 
-  if (requestUrl.includes('.html')) {
-    res.writeHead(httpStatus.OK, {
-      'Content-Type': 'text/html'
-    });
-    customReadFile(`./views/${requestUrl}`, res);
-  } else if (requestUrl.includes('.js')) {
-    res.writeHead(httpStatus.OK, {
-      'Content-Type': 'text/javascript'
-    });
-    customReadFile(`./public/js${requestUrl}`, res);
-  } else if (requestUrl.includes('.css')) {
-    res.writeHead(httpStatus.OK, {
-      'Content-Type': 'text/css'
-    });
-    customReadFile(`./public/css${requestUrl}`, res);
-  } else if (requestUrl.includes('.png')) {
-    res.writeHead(httpStatus.OK, {
-      'Content-Type': 'image/png'
-    });
-    customReadFile(`./public/images${requestUrl}`, res);
-  } else {
-    sendErrorMessage(res);
-  }
-}).listen(port);
+router.get('/', (req, res) => {
+  res.writeHead(httpStatus.OK, router.plainTextContentType);
+  res.end('INDEX');
+});
+
+router.get('/index.html', (req, res) => {
+  res.writeHead(httpStatus.OK, router.htmlContentType);
+  customReadFile('views/index.html', res);
+});
+
+router.get('/kde.png', (req, res) => {
+  res.writeHead(httpStatus.OK, router.pngContentType);
+  customReadFile('public/images/kde.png', res);
+});
+
+router.get('/style.css', (req, res) => {
+  res.writeHead(httpStatus.OK, router.cssContentType);
+  customReadFile('public/css/style.css', res);
+});
+
+router.post('/', (req, res) => {
+  res.writeHead(httpStatus.OK, router.plainTextContentType);
+  res.end('POSTED');
+});
+
+http.createServer(router.handle).listen(port);
 
 console.log(`port: ${port} is listening...`);
 
-function customReadFile(filePath, res) {
-  if (!fs.existsSync(filePath)) {
-    sendErrorMessage(res);
-    return;
-  }
-  fs.readFile(filePath, (error, data) => {
-    if (error) {
-      console.log(error);
-      sendErrorMessage(res);
-      return;
-    }
-    res.write(data);
-    res.end();
-  })
-}
-
-function sendErrorMessage(res) {
-  res.writeHead(httpStatus.NOT_FOUND, {
-    'Content-Type': 'text/html'
-  });
-  res.write('<h1>FILE NOT FOUND</h1>')
-  res.end();
-}
