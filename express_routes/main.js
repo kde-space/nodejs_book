@@ -2,19 +2,24 @@
 
 const port = 3000;
 const express = require('express');
+const homeController = require('./controllers/homeController');
 const app = express();
 
-app.use((req, res, next) => {
-  console.log(`request made to: ${req.url}`);
-  next();
+app.use(express.urlencoded({
+  extended: false
+}));
+
+app.use(express.json());
+
+app.post('/', (req, res) => {
+  console.log('req.body :', req.body);
+  console.log('req.query :', req.query);
+  res.send('POST success!');
 });
 
-app.use('/items/:vegetable', (req, res, next) => {
-  console.log('req.params :', req.params);
-  console.log('req.query :', req.query);
-  const veg = req.params.vegetable;
-  res.send(`This is the page for ${veg}`);
-});
+app.post('/sign_up', homeController.userSignUpProcessor);
+
+app.get('/items/:vegetable', homeController.sendReqParam);
 
 app.listen(port, () => {
   console.log(`Server running on port: ${port}`);
